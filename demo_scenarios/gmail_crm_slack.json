@@ -1,0 +1,156 @@
+{
+  "scenario_name": "Invoice Ingestion & Team Notification",
+  "description": "User regularly receives invoice emails in Gmail, downloads the attachment, updates the customer record in CRM, and posts a notification in Slack.",
+  "events": [
+    {
+      "event_id": "evt_001",
+      "timestamp": "2026-09-26T09:15:00Z",
+      "app": "Gmail (Chrome)",
+      "action": "open_email",
+      "window_title": "Gmail - Inbox - Invoice from Acme Corp (INV-1042)",
+      "metadata": {
+        "sender": "billing@acmecorp.com",
+        "subject": "Invoice INV-1042 Acme Corp",
+        "has_attachment": true,
+        "attachment_name": "INV-1042_AcmeCorp.pdf"
+      }
+    },
+    {
+      "event_id": "evt_002",
+      "timestamp": "2026-09-26T09:15:20Z",
+      "app": "Browser Download",
+      "action": "download_file",
+      "window_title": "Save Attachment",
+      "metadata": {
+        "file_name": "INV-1042_AcmeCorp.pdf",
+        "file_path": "C:/Users/VIDYA/Downloads/INV-1042_AcmeCorp.pdf",
+        "file_type": "application/pdf"
+      }
+    },
+    {
+      "event_id": "evt_003",
+      "timestamp": "2026-09-26T09:16:05Z",
+      "app": "HubSpot CRM",
+      "action": "update_customer_record",
+      "window_title": "HubSpot CRM - Acme Corp (ID: 1042)",
+      "metadata": {
+        "customer_id": "1042",
+        "customer_name": "Acme Corp",
+        "field_updated": "invoice_status",
+        "value": "Paid",
+        "attached_document": "INV-1042_AcmeCorp.pdf"
+      }
+    },
+    {
+      "event_id": "evt_004",
+      "timestamp": "2026-09-26T09:16:45Z",
+      "app": "Slack",
+      "action": "send_message",
+      "window_title": "Slack - #billing-updates",
+      "metadata": {
+        "channel": "#billing-updates",
+        "message": "Processed invoice INV-1042 for Acme Corp. CRM record updated."
+      }
+    },
+    {
+      "event_id": "evt_005",
+      "timestamp": "2026-09-26T09:40:10Z",
+      "app": "Gmail (Chrome)",
+      "action": "open_email",
+      "window_title": "Gmail - Inbox - Invoice from Stark Industries (INV-1043)",
+      "metadata": {
+        "sender": "accounts@stark.com",
+        "subject": "Invoice INV-1043 Stark Industries",
+        "has_attachment": true,
+        "attachment_name": "INV-1043_StarkIndustries.pdf"
+      }
+    },
+    {
+      "event_id": "evt_006",
+      "timestamp": "2026-09-26T09:40:30Z",
+      "app": "Browser Download",
+      "action": "download_file",
+      "window_title": "Save Attachment",
+      "metadata": {
+        "file_name": "INV-1043_StarkIndustries.pdf",
+        "file_path": "C:/Users/VIDYA/Downloads/INV-1043_StarkIndustries.pdf",
+        "file_type": "application/pdf"
+      }
+    },
+    {
+      "event_id": "evt_007",
+      "timestamp": "2026-09-26T09:41:15Z",
+      "app": "HubSpot CRM",
+      "action": "update_customer_record",
+      "window_title": "HubSpot CRM - Stark Industries (ID: 1043)",
+      "metadata": {
+        "customer_id": "1043",
+        "customer_name": "Stark Industries",
+        "field_updated": "invoice_status",
+        "value": "Paid",
+        "attached_document": "INV-1043_StarkIndustries.pdf"
+      }
+    },
+    {
+      "event_id": "evt_008",
+      "timestamp": "2026-09-26T09:41:50Z",
+      "app": "Slack",
+      "action": "send_message",
+      "window_title": "Slack - #billing-updates",
+      "metadata": {
+        "channel": "#billing-updates",
+        "message": "Processed invoice INV-1043 for Stark Industries. CRM record updated."
+      }
+    },
+    {
+      "event_id": "evt_009",
+      "timestamp": "2026-09-26T10:10:00Z",
+      "app": "Gmail (Chrome)",
+      "action": "open_email",
+      "window_title": "Gmail - Inbox - Invoice from Wayne Enterprises (INV-1044)",
+      "metadata": {
+        "sender": "finance@wayne.com",
+        "subject": "Invoice INV-1044 Wayne Enterprises",
+        "has_attachment": true,
+        "attachment_name": "INV-1044_WayneEnterprises.pdf"
+      }
+    },
+    {
+      "event_id": "evt_010",
+      "timestamp": "2026-09-26T10:10:25Z",
+      "app": "Browser Download",
+      "action": "download_file",
+      "window_title": "Save Attachment",
+      "metadata": {
+        "file_name": "INV-1044_WayneEnterprises.pdf",
+        "file_path": "C:/Users/VIDYA/Downloads/INV-1044_WayneEnterprises.pdf",
+        "file_type": "application/pdf"
+      }
+    },
+    {
+      "event_id": "evt_011",
+      "timestamp": "2026-09-26T10:11:10Z",
+      "app": "HubSpot CRM",
+      "action": "update_customer_record",
+      "window_title": "HubSpot CRM - Wayne Enterprises (ID: 1044)",
+      "metadata": {
+        "customer_id": "1044",
+        "customer_name": "Wayne Enterprises",
+        "field_updated": "invoice_status",
+        "value": "Paid",
+        "attached_document": "INV-1044_WayneEnterprises.pdf"
+      }
+    },
+    {
+      "event_id": "evt_012",
+      "timestamp": "2026-09-26T10:11:45Z",
+      "app": "Slack",
+      "action": "send_message",
+      "window_title": "Slack - #billing-updates",
+      "metadata": {
+        "channel": "#billing-updates",
+        "message": "Processed invoice INV-1044 for Wayne Enterprises. CRM record updated."
+      }
+    }
+  ]
+}
