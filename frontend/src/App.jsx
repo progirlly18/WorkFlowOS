@@ -2,6 +2,74 @@ import React, { useEffect, useState } from "react";
 
 const API = "http://127.0.0.1:8000/api";
 
+const PHASES = [
+  { id: 1, label: "Observe" },
+  { id: 2, label: "Understand" },
+  { id: 3, label: "Detect Repetition" },
+  { id: 4, label: "Generate Workflow" },
+  { id: 5, label: "User Approval" },
+  { id: 6, label: "Automate" },
+  { id: 7, label: "Learn" },
+];
+
+function getAppInfo(rawApp = "") {
+  const lower = rawApp.toLowerCase();
+  if (lower.includes("gmail") || lower.includes("mail")) {
+    return { name: "Gmail", icon: "✉", color: "#f87171", bg: "rgba(239, 68, 68, 0.14)" };
+  }
+  if (lower.includes("download") || lower.includes("browser")) {
+    return { name: "Browser Download", icon: "↓", color: "#38bdf8", bg: "rgba(56, 189, 248, 0.14)" };
+  }
+  if (lower.includes("hubspot") || lower.includes("crm")) {
+    return { name: "HubSpot CRM", icon: "◆", color: "#fb923c", bg: "rgba(251, 146, 60, 0.14)" };
+  }
+  if (lower.includes("slack")) {
+    return { name: "Slack", icon: "●", color: "#f472b6", bg: "rgba(244, 114, 182, 0.14)" };
+  }
+  return { name: rawApp || "App", icon: "❖", color: "#94a3b8", bg: "rgba(148, 163, 184, 0.14)" };
+}
+
+function formatAction(action = "") {
+  return action
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatTime(isoString) {
+  if (!isoString) return "";
+  try {
+    const date = new Date(isoString);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+  } catch (_) { }
+  return (isoString || "").slice(11, 19);
+}
+
+function getEventDescription(event) {
+  const meta = event.metadata || {};
+  if (event.action === "open_email") {
+    const subject = meta.subject || "";
+    const sender = meta.sender ? `from ${meta.sender}` : "";
+    return subject ? `${subject} (${sender})` : event.window_title || "Email opened";
+  }
+  if (event.action === "download_file") {
+    const file = meta.file_name || "attachment";
+    return `Saved file: ${file}`;
+  }
+  if (event.action === "update_customer_record") {
+    const customer = meta.customer_name ? `${meta.customer_name} (ID: ${meta.customer_id})` : "";
+    const update = meta.field_updated ? `set ${meta.field_updated} = ${meta.value}` : "Record updated";
+    return customer ? `${customer} — ${update}` : update;
+  }
+  if (event.action === "send_message") {
+    const ch = meta.channel ? `${meta.channel}: ` : "";
+    const msg = meta.message || "Message sent";
+    return `${ch}"${msg}"`;
+  }
+  return event.window_title || event.action;
+}
+
 export default function App() {
   const [events, setEvents] = useState([]);
   const [pattern, setPattern] = useState(null);
@@ -9,6 +77,7 @@ export default function App() {
   const [execution, setExecution] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [activePhase, setActivePhase] = useState(1);
 
   async function loadDemo() {
     setLoading(true);
@@ -61,6 +130,24 @@ export default function App() {
       setMessage("Approval failed.");
     }
   }
+
+  async function rejectWorkflow() {
+    if (!workflow) return;
+
+    try {
+      const res = await fetch(
+        `${API}/workflows/${workflow.workflow_id}/reject`,
+        { method: "POST" }
+      );
+
+      const rejected = await res.json();
+      setWorkflow(rejected);
+      setMessage("Workflow rejected. No automation executed.");
+    } catch (error) {
+      setMessage("Rejection failed.");
+    }
+  }
+
 
   async function executeWorkflow() {
     if (!workflow) return;
@@ -124,72 +211,113 @@ export default function App() {
           </div>
 
           <button className="demo-button" onClick={loadDemo} disabled={loading}>
-            {loading ? "PROCESSING..." : "▶ RUN DEMO"}
+            {loading ? "PROCESSING..." : "↻ REPLAY DEMO"}
           </button>
         </section>
 
         {message && <div className="message">{message}</div>}
 
-        {/* PIPELINE */}
+        {/* PIPELINE / 7-PHASE LIFECYCLE */}
         <section className="pipeline">
-          <div className="pipeline-step active">
-            <span>01</span>
-            Observe
-          </div>
-          <div className="arrow">→</div>
-          <div className="pipeline-step active">
-            <span>02</span>
-            Detect
-          </div>
-          <div className="arrow">→</div>
-          <div className="pipeline-step active">
-            <span>03</span>
-            Understand
-          </div>
-          <div className="arrow">→</div>
-          <div className="pipeline-step active">
-            <span>04</span>
-            Generate
-          </div>
-          <div className="arrow">→</div>
-          <div className="pipeline-step active">
-            <span>05</span>
-            Automate
-          </div>
+          {PHASES.map((phase, index) => {
+            const isActive = activePhase === phase.id;
+            const isCompleted = activePhase > phase.id;
+
+            return (
+              <React.Fragment key={phase.id}>
+                <button
+                  type="button"
+                  className={`pipeline-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+                  onClick={() => setActivePhase(phase.id)}
+                >
+                  <span className="step-num">
+                    {isCompleted ? "✓" : `0${phase.id}`}
+                  </span>
+                  <span className="step-label">{phase.label}</span>
+                </button>
+                {index < PHASES.length - 1 && (
+                  <div className={`arrow ${isCompleted ? "completed" : ""}`}>
+                    →
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
         </section>
 
-        {/* ACTIVITY */}
-        <section className="card">
+        {/* PHASE 1: OBSERVE */}
+        <section className="card observe-card">
           <div className="section-header">
             <div>
-              <p className="section-label">LIVE ACTIVITY</p>
-              <h2>Observed Work Pattern</h2>
+              <p className="section-label">PHASE 01 • OBSERVE</p>
+              <h2>Demo Observation Mode • Structured Activity Stream</h2>
             </div>
 
             {events.length > 0 && (
-              <span className="pill">{events.length} EVENTS</span>
+              <span className="pill">{events.length} OBSERVED EVENTS</span>
             )}
           </div>
 
-          <div className="activity-flow">
-            {[
-              ["Gmail", "Open Email", "✉"],
-              ["Browser Download", "Download File", "↓"],
-              ["HubSpot CRM", "Update Customer", "◆"],
-              ["Slack", "Send Message", "●"],
-            ].map(([app, action, icon], index) => (
-              <React.Fragment key={app}>
-                <div className="activity-item">
-                  <div className="activity-icon">{icon}</div>
-                  <div>
-                    <strong>{app}</strong>
-                    <small>{action}</small>
-                  </div>
-                </div>
+          {/* VISUAL SEQUENCE BAR */}
+          <div className="sequence-banner">
+            <span className="sequence-tag">OBSERVED SEQUENCE</span>
+            <div className="sequence-steps">
+              <span className="sequence-chip gmail">Gmail</span>
+              <span className="sequence-arrow">→</span>
+              <span className="sequence-chip download">Browser Download</span>
+              <span className="sequence-arrow">→</span>
+              <span className="sequence-chip crm">HubSpot CRM</span>
+              <span className="sequence-arrow">→</span>
+              <span className="sequence-chip slack">Slack</span>
+            </div>
+          </div>
 
-                {index < 3 && <div className="flow-arrow">→</div>}
-              </React.Fragment>
-            ))}
+          {/* CHRONOLOGICAL ACTIVITY STREAM */}
+          <div className="activity-stream">
+            {events.length === 0 ? (
+              <div className="activity-empty">
+                Listening for desktop activity... Click "RUN DEMO" to ingest activity stream.
+              </div>
+            ) : (
+              events.map((event, index) => {
+                const appInfo = getAppInfo(event.app);
+                const actionLabel = formatAction(event.action);
+                const desc = getEventDescription(event);
+                const timeStr = formatTime(event.timestamp);
+                const isCycleStart = index > 0 && index % 4 === 0;
+
+                return (
+                  <React.Fragment key={event.event_id || index}>
+                    {isCycleStart && (
+                      <div className="cycle-divider">
+                        <span>Cycle {Math.floor(index / 4) + 1}</span>
+                      </div>
+                    )}
+                    <div className="stream-item">
+                      <div className="stream-time">{timeStr}</div>
+
+                      <div
+                        className="stream-app-badge"
+                        style={{ color: appInfo.color, background: appInfo.bg }}
+                      >
+                        <span className="stream-app-icon">{appInfo.icon}</span>
+                        <span>{appInfo.name}</span>
+                      </div>
+
+                      <div className="stream-action">{actionLabel}</div>
+
+                      <div className="stream-desc" title={desc}>
+                        {desc}
+                      </div>
+
+                      <div className="stream-step-tag">
+                        Step {(index % 4) + 1}/4
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              })
+            )}
           </div>
         </section>
 
@@ -268,17 +396,39 @@ export default function App() {
                 </div>
               </div>
 
-              {workflow.status === "PENDING_APPROVAL" && (
-                <button className="approve-button" onClick={approveWorkflow}>
-                  ✓ APPROVE & AUTOMATE
-                </button>
-              )}
+              <div className="approval-summary">
+                <span className="approval-label">PHASE 05 • USER APPROVAL</span>
+                <strong>Review before automation</strong>
+                <small>
+                  WorkFlowOS will execute these steps only after human approval.
+                </small>
+              </div>
 
-              {workflow.status === "APPROVED" && (
-                <button className="approve-button" onClick={executeWorkflow}>
-                  ▶ EXECUTE WORKFLOW
-                </button>
-              )}
+              <div className="approval-actions">
+                {workflow.status === "PENDING_APPROVAL" && (
+                  <>
+                    <button
+                      className="reject-button"
+                      onClick={rejectWorkflow}
+                    >
+                      ✕ REJECT
+                    </button>
+
+                    <button
+                      className="approve-button"
+                      onClick={approveWorkflow}
+                    >
+                      ✓ APPROVE & AUTOMATE
+                    </button>
+                  </>
+                )}
+
+                {workflow.status === "APPROVED" && (
+                  <button className="approve-button" onClick={executeWorkflow}>
+                    ▶ EXECUTE WORKFLOW
+                  </button>
+                )}
+              </div>
             </div>
           </section>
         )}
@@ -288,7 +438,7 @@ export default function App() {
           <section className="card execution-card">
             <div className="section-header">
               <div>
-                <p className="section-label">AUTOMATION RESULT</p>
+                <p className="section-label">PHASE 06 • AUTOMATE</p>
                 <h2>Workflow Executed</h2>
               </div>
 
@@ -335,6 +485,37 @@ export default function App() {
             </div>
           </section>
         )}
+        <section className="learn-card">
+          <div className="section-header">
+            <div>
+              <p className="section-label">PHASE 07 • LEARN</p>
+              <h2>Learning Signal Recorded</h2>
+            </div>
+            <span className="success-pill">✓ RECORDED</span>
+          </div>
+
+          <div className="learn-grid">
+            <div>
+              <strong>1</strong>
+              <span>Successful run</span>
+            </div>
+
+            <div>
+              <strong>4/4</strong>
+              <span>Steps completed</span>
+            </div>
+
+            <div>
+              <strong>3 min</strong>
+              <span>Time saved</span>
+            </div>
+          </div>
+
+          <p className="learn-description">
+            WorkFlowOS records execution history so future workflow suggestions
+            can be refined from successful runs.
+          </p>
+        </section>
 
         <footer>
           <span>WorkFlowOS • Hackathon MVP</span>
