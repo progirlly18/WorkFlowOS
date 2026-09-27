@@ -228,7 +228,22 @@ export default function App() {
                 <button
                   type="button"
                   className={`pipeline-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
-                  onClick={() => setActivePhase(phase.id)}
+                  onClick={() => {
+                    setActivePhase(phase.id);
+                    const targets = {
+                      1: "phase-observe",
+                      2: "phase-understand",
+                      3: "phase-detect",
+                      4: "phase-generate",
+                      5: "phase-approval",
+                      6: "phase-automate",
+                      7: "phase-learn",
+                    };
+                    document.getElementById(targets[phase.id])?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }}
                 >
                   <span className="step-num">
                     {isCompleted ? "✓" : `0${phase.id}`}
@@ -246,7 +261,7 @@ export default function App() {
         </section>
 
         {/* PHASE 1: OBSERVE */}
-        <section className="card observe-card">
+        <section id="phase-observe" className="card observe-card">
           <div className="section-header">
             <div>
               <p className="section-label">PHASE 01 • OBSERVE</p>
@@ -321,9 +336,42 @@ export default function App() {
           </div>
         </section>
 
+        {/* PHASE 02: UNDERSTAND */}
+        {workflow && (
+          <section id="phase-understand" className="card understand-card">
+            <div className="section-header">
+              <div>
+                <p className="section-label">PHASE 02 • UNDERSTAND</p>
+                <h2>AI Understanding</h2>
+              </div>
+              <span className="status-pill approved">AI INTERPRETED</span>
+            </div>
+
+            <div className="understand-content">
+              <div className="understand-main">
+                <span className="understand-label">IDENTIFIED INTENT</span>
+                <h3>{workflow.name}</h3>
+                <p>{workflow.intent_summary}</p>
+              </div>
+
+              <div className="understand-flow">
+                <div>
+                  <strong>Observed Activity</strong>
+                  <span>{events.length} events</span>
+                </div>
+                <span className="understand-arrow">→</span>
+                <div>
+                  <strong>AI Interpretation</strong>
+                  <span>Workflow intent identified</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* DETECTION */}
         {pattern && (
-          <section className="card detection-card">
+          <section id="phase-detect" className="card detection-card">
             <div className="detection-badge">↻ REPETITION DETECTED</div>
 
             <div className="metrics">
@@ -351,10 +399,10 @@ export default function App() {
 
         {/* WORKFLOW */}
         {workflow && (
-          <section className="card workflow-card">
+          <section id="phase-generate" className="card workflow-card">
             <div className="section-header">
               <div>
-                <p className="section-label">AI-GENERATED WORKFLOW</p>
+                <p className="section-label">PHASE 04 • GENERATE WORKFLOW</p>
                 <h2>{workflow.name}</h2>
               </div>
 
@@ -385,7 +433,7 @@ export default function App() {
               ))}
             </div>
 
-            <div className="workflow-footer">
+            <div id="phase-approval" className="workflow-footer">
               <div className="time-saving">
                 <span>⚡</span>
                 <div>
@@ -435,7 +483,7 @@ export default function App() {
 
         {/* EXECUTION */}
         {execution && (
-          <section className="card execution-card">
+          <section id="phase-automate" className="card execution-card">
             <div className="section-header">
               <div>
                 <p className="section-label">PHASE 06 • AUTOMATE</p>
@@ -485,7 +533,7 @@ export default function App() {
             </div>
           </section>
         )}
-        <section className="learn-card">
+        <section id="phase-learn" className="learn-card">
           <div className="section-header">
             <div>
               <p className="section-label">PHASE 07 • LEARN</p>
@@ -519,7 +567,7 @@ export default function App() {
 
         <footer>
           <span>WorkFlowOS • Hackathon MVP</span>
-          <span>Observe → Understand → Automate</span>
+          <span>Observe → Understand → Detect → Generate → Approve → Automate → Learn</span>
         </footer>
       </main>
     </div>
